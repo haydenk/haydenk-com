@@ -29,8 +29,32 @@ jobs:
       - name: Test Jekyll Site
         run: bundle exec htmlproofer ./_site --disable-external
 
-      - name: Upload Jekyll Site as Artifact
+      - name: Upload Jekyll Build Artifact
         uses: actions/upload-artifact@v2
         with:
           name: jekyll-build
           path: ./_site
+
+      - name: Upload Cloudformation Template Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: jekyll-cfn
+          path: ./cfn
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Jekyll Build Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: jekyll-build
+
+      - name: Download Cloudformation Template Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: jekyll-cfn
+
+      - name: Print current directory after getting artifacts
+          shell: bash
+          run: ls -lR
