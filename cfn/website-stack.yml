@@ -1,161 +1,211 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: haydenk.com Deployment Stack
 Parameters:
-  LogLevel:
+  WebsiteS3Bucket:
     Type: String
-    Default: 'DEBUG'
-  TimeZone:
+  PrimaryDomain:
     Type: String
-    Default: 'America/Chicago'
+  SecondaryDomain:
+    Type: String
 Resources:
-  FetchLambdaRole:
-    Type: 'AWS::IAM::Role'
+  WebS3Bucket:
+    Type: AWS::S3::Bucket
     Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Path: /service-role/
-      Policies:
-        - PolicyName: ConedTcisLambdaExecutionPolicy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: 'logs:CreateLogGroup'
-                Resource:
-                  - Fn::Join:
-                      - ':'
-                      - - 'arn:aws:logs'
-                        - !Ref AWS::Region
-                        - !Ref AWS::AccountId
-                        - '*'
-              - Effect: Allow
-                Action:
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
-                Resource:
-                  - Fn::Join:
-                      - ':'
-                      - - 'arn:aws:logs'
-                        - !Ref AWS::Region
-                        - !Ref AWS::AccountId
-                        - '*'
-              - Effect: Allow
-                Action: 'logs:CreateLogGroup'
-                Resource:
-                  - Fn::Join:
-                      - ':'
-                      - - 'arn:aws:logs'
-                        - !Ref AWS::Region
-                        - !Ref AWS::AccountId
-                        - 'log-group'
-                        - Fn::Join:
-                            - '/'
-                            - - '/aws/lambda'
-                              - 'coned-tcis-fetch'
-                        - '*'
-        - PolicyName: ConedTcisSSMAccessPolicy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: 'ssm:GetParametersByPath'
-                Resource:
-                  - Fn::Join:
-                      - ':'
-                      - - 'arn:aws:ssm'
-                        - !Ref AWS::Region
-                        - !Ref AWS::AccountId
-                        - Fn::Join:
-                            - '/'
-                            - - 'parameter'
-                              - '*/coned/tcis'
-                  - Fn::Join:
-                      - ':'
-                      - - 'arn:aws:ssm'
-                        - !Ref AWS::Region
-                        - !Ref AWS::AccountId
-                        - Fn::Join:
-                            - '/'
-                            - - 'parameter'
-                              - '*/rds/level5'
-              - Effect: Allow
-                Action: 'ssm:DescribeParameters'
-                Resource: '*'
-        - PolicyName: ConedTcisS3AccessPolicy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 's3:ListBucket'
-                  - 's3:GetObject'
-                  - 's3:PutObject'
-                  - 's3:DeleteObject'
-                Resource:
-                  - Fn::Join:
-                      - ''
-                      - - 'arn:aws:s3:::'
-                        - !Ref DropBucketName
-                  - Fn::Join:
-                      - ''
-                      - - 'arn:aws:s3:::'
-                        - !Ref DropBucketName
-                        - '/*'
-        - PolicyName: ConedTcisDynamoDBPolicy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: 'dynamodb:PutItem'
-                Resource:
-                  Fn::GetAtt:
-                    - FetchedDataTable
-                    - Arn
-  LambdaProcessFunction:
-    Type: 'AWS::Lambda::Function'
+      BucketName: !Ref WebsiteS3Bucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  WebsiteSslCertificate:
+    Type: AWS::CertificateManager::Certificate
     Properties:
-      Code:
-        S3Bucket: !Ref LambdaCodeBucket
-        S3Key: !Ref ProcessLambdaKey
-      Description: |
-        Processes the data fetched from TCIS
-        and saved to an S3 object in level5-data bucket
-        Triggered by: DynamoDB insert
-      Environment:
-        Variables:
-          DROP_BUCKET: !Ref DropBucketName
-          LOG_LEVEL: !Ref LogLevel
-          TIME_ZONE: !Ref TimeZone
-          DB_SSM_PATH: !Ref TcisProcessRdsSsmPath
-      FunctionName: tcis-process-fetch
-      Handler: lambda_function.lambda_handler
-      MemorySize: 256
-      Role:
-        Fn::GetAtt:
-          - ProcessLambdaRole
-          - Arn
-      Runtime: python3.8
-      Timeout: 60
-Outputs:
-  FetchLambdaRole:
-    Description: "The IAM role for the Coned TCIS Fetch Lambda"
-    Value: !Ref FetchLambdaRole
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-FetchLambdaRoleArn"
-  FetchLambdaArn:
-    Description: "Coned TCIS Fetch Lambda"
-    Value:
-      Fn::GetAtt:
-        - LambdaFetchFunction
-        - Arn
-    Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-LambdaFetchFunction"
+      DomainName: !Ref PrimaryDomain
+      DomainValidationOptions:
+        - DomainName: !Ref PrimaryDomain
+          ValidationDomain: !Ref PrimaryDomain
+        - DomainName: !Ref SecondaryDomain
+          ValidationDomain: !Ref SecondaryDomain
+      SubjectAlternativeNames:
+        - !Ref PrimaryDomain
+        - !Ref SecondaryDomain
+      ValidationMethod: DNS
+
+#  PrimaryDomainVerification:
+#    Type: AWS::Route53::RecordSet
+#    Properties:
+#      HostedZoneId: Z56MR00FY1VMM
+#      Name: !GetAtt WebsiteSslCertificate.Domain
+#      Type: CNAME
+
+#      AliasTarget:
+#        AliasTarget
+#      Comment: String
+#      Failover: String
+#      GeoLocation:
+#        GeoLocation
+#      HealthCheckId: String
+#      HostedZoneId: String
+#      HostedZoneName: String
+#      MultiValueAnswer: Boolean
+#      Name: String
+#      Region: String
+#      ResourceRecords:
+#        - String
+#      SetIdentifier: String
+#      TTL: String
+#      Type: String
+#      Weight: Integer
+
+#  FetchLambdaRole:
+#    Type: 'AWS::IAM::Role'
+#    Properties:
+#      AssumeRolePolicyDocument:
+#        Version: 2012-10-17
+#        Statement:
+#          - Effect: Allow
+#            Principal:
+#              Service:
+#                - lambda.amazonaws.com
+#            Action:
+#              - 'sts:AssumeRole'
+#      Path: /service-role/
+#      Policies:
+#        - PolicyName: ConedTcisLambdaExecutionPolicy
+#          PolicyDocument:
+#            Version: 2012-10-17
+#            Statement:
+#              - Effect: Allow
+#                Action: 'logs:CreateLogGroup'
+#                Resource:
+#                  - Fn::Join:
+#                      - ':'
+#                      - - 'arn:aws:logs'
+#                        - !Ref AWS::Region
+#                        - !Ref AWS::AccountId
+#                        - '*'
+#              - Effect: Allow
+#                Action:
+#                  - 'logs:CreateLogStream'
+#                  - 'logs:PutLogEvents'
+#                Resource:
+#                  - Fn::Join:
+#                      - ':'
+#                      - - 'arn:aws:logs'
+#                        - !Ref AWS::Region
+#                        - !Ref AWS::AccountId
+#                        - '*'
+#              - Effect: Allow
+#                Action: 'logs:CreateLogGroup'
+#                Resource:
+#                  - Fn::Join:
+#                      - ':'
+#                      - - 'arn:aws:logs'
+#                        - !Ref AWS::Region
+#                        - !Ref AWS::AccountId
+#                        - 'log-group'
+#                        - Fn::Join:
+#                            - '/'
+#                            - - '/aws/lambda'
+#                              - 'coned-tcis-fetch'
+#                        - '*'
+#        - PolicyName: ConedTcisSSMAccessPolicy
+#          PolicyDocument:
+#            Version: 2012-10-17
+#            Statement:
+#              - Effect: Allow
+#                Action: 'ssm:GetParametersByPath'
+#                Resource:
+#                  - Fn::Join:
+#                      - ':'
+#                      - - 'arn:aws:ssm'
+#                        - !Ref AWS::Region
+#                        - !Ref AWS::AccountId
+#                        - Fn::Join:
+#                            - '/'
+#                            - - 'parameter'
+#                              - '*/coned/tcis'
+#                  - Fn::Join:
+#                      - ':'
+#                      - - 'arn:aws:ssm'
+#                        - !Ref AWS::Region
+#                        - !Ref AWS::AccountId
+#                        - Fn::Join:
+#                            - '/'
+#                            - - 'parameter'
+#                              - '*/rds/level5'
+#              - Effect: Allow
+#                Action: 'ssm:DescribeParameters'
+#                Resource: '*'
+#        - PolicyName: ConedTcisS3AccessPolicy
+#          PolicyDocument:
+#            Version: 2012-10-17
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - 's3:ListBucket'
+#                  - 's3:GetObject'
+#                  - 's3:PutObject'
+#                  - 's3:DeleteObject'
+#                Resource:
+#                  - Fn::Join:
+#                      - ''
+#                      - - 'arn:aws:s3:::'
+#                        - !Ref DropBucketName
+#                  - Fn::Join:
+#                      - ''
+#                      - - 'arn:aws:s3:::'
+#                        - !Ref DropBucketName
+#                        - '/*'
+#        - PolicyName: ConedTcisDynamoDBPolicy
+#          PolicyDocument:
+#            Version: 2012-10-17
+#            Statement:
+#              - Effect: Allow
+#                Action: 'dynamodb:PutItem'
+#                Resource:
+#                  Fn::GetAtt:
+#                    - FetchedDataTable
+#                    - Arn
+#  LambdaProcessFunction:
+#    Type: 'AWS::Lambda::Function'
+#    Properties:
+#      Code:
+#        S3Bucket: !Ref LambdaCodeBucket
+#        S3Key: !Ref ProcessLambdaKey
+#      Description: |
+#        Processes the data fetched from TCIS
+#        and saved to an S3 object in level5-data bucket
+#        Triggered by: DynamoDB insert
+#      Environment:
+#        Variables:
+#          DROP_BUCKET: !Ref DropBucketName
+#          LOG_LEVEL: !Ref LogLevel
+#          TIME_ZONE: !Ref TimeZone
+#          DB_SSM_PATH: !Ref TcisProcessRdsSsmPath
+#      FunctionName: tcis-process-fetch
+#      Handler: lambda_function.lambda_handler
+#      MemorySize: 256
+#      Role:
+#        Fn::GetAtt:
+#          - ProcessLambdaRole
+#          - Arn
+#      Runtime: python3.8
+#      Timeout: 60
+#Outputs:
+#  FetchLambdaRole:
+#    Description: "The IAM role for the Coned TCIS Fetch Lambda"
+#    Value: !Ref FetchLambdaRole
+#    Export:
+#      Name:
+#        Fn::Sub: "${AWS::StackName}-FetchLambdaRoleArn"
+#  FetchLambdaArn:
+#    Description: "Coned TCIS Fetch Lambda"
+#    Value:
+#      Fn::GetAtt:
+#        - LambdaFetchFunction
+#        - Arn
+#    Export:
+#      Name:
+#        Fn::Sub: "${AWS::StackName}-LambdaFetchFunction"
