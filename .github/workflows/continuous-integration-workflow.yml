@@ -46,17 +46,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download Jekyll Build Artifact
+      - name: Download Artifacts
         uses: actions/download-artifact@v2
-        with:
-          name: jekyll-build
-          path: _site
-
-      - name: Download Cloudformation Template Artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: jekyll-cfn
-          path: cfn
 
       - name: Print current directory after getting artifacts
         shell: bash
