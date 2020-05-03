@@ -32,13 +32,13 @@ jobs:
       - name: Upload Jekyll Build Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: jekyll-build
+          name: _site
           path: ./_site
 
       - name: Upload Cloudformation Template Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: jekyll-cfn
+          name: cfn
           path: ./cfn
 
   deploy:
