@@ -56,5 +56,5 @@ jobs:
           name: jekyll-cfn
 
       - name: Print current directory after getting artifacts
-          shell: bash
-          run: ls -lR
+        shell: bash
+        run: ls -lR
