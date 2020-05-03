@@ -1,0 +1,27 @@
+name: Build and Deploy Jekyll
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: 2.7.1
+
+      - name: Install dependencies
+        run: bundle install
+
+      - name: Build Jekyll Site
+        run: |
+          bundle exec jekyll build
+          find _site -type f -exec gzip -v9 {} \; -exec mv -v {}.gz {} \;
+
+      - name: Test Jekyll Site
+        run: bundle exec htmlproofer ./_site --disable-external
