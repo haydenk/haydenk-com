@@ -6,6 +6,7 @@ on:
 
 jobs:
   build:
+    name: Build and Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -19,9 +20,17 @@ jobs:
         run: bundle install
 
       - name: Build Jekyll Site
+        env:
+          JEKYLL_ENV: production
         run: |
           bundle exec jekyll build
           find _site -type f -exec gzip -v9 {} \; -exec mv -v {}.gz {} \;
 
       - name: Test Jekyll Site
         run: bundle exec htmlproofer ./_site --disable-external
+
+      - name: Upload Jekyll Site as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: jekyll-build
+          path: ./_site
