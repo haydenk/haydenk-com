@@ -59,12 +59,7 @@ jobs:
       - name: Get ACM Certificate ARN
         run: |
           export CERTIFICATE_ARN=$(aws acm list-certificates --output text | grep www.haydenk.com | awk '{print $2}')
-
-      - name: Display the path
-        run: |
-          import os
-          print(os.environ['PATH'])
-        shell: python
+          echo $CERTIFICATE_ARN
 
       - name: Print current directory after getting artifacts
         shell: bash
