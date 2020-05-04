@@ -57,9 +57,14 @@ jobs:
           aws-region: us-east-1
 
       - name: Get ACM Certificate ARN
-        env:
-          CERTIFICATE_ARN: $(aws acm list-certificates --output text | grep www.haydenk.com | awk '{print $2}')
-        run: echo $CERTIFICATE_ARN
+        run: |
+          export CERTIFICATE_ARN=$(aws acm list-certificates --output text | grep www.haydenk.com | awk '{print $2}')
+
+      - name: Display the path
+        run: |
+          import os
+          print(os.environ['PATH'])
+        shell: python
 
       - name: Print current directory after getting artifacts
         shell: bash
