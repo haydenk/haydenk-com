@@ -7,6 +7,11 @@ Parameters:
     Type: String
   SecondaryDomain:
     Type: String
+  CertificateArn:
+    Type: String
+  HostedZone:
+    Type: String
+    Default: Z56MR00FY1VMM
 Resources:
   WebS3Bucket:
     Type: AWS::S3::Bucket
@@ -18,45 +23,114 @@ Resources:
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
-  WebsiteSslCertificate:
-    Type: AWS::CertificateManager::Certificate
+  WebS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
     Properties:
-      DomainName: !Ref PrimaryDomain
-      DomainValidationOptions:
-        - DomainName: !Ref PrimaryDomain
-          ValidationDomain: !Ref PrimaryDomain
-        - DomainName: !Ref SecondaryDomain
-          ValidationDomain: !Ref SecondaryDomain
-      SubjectAlternativeNames:
-        - !Ref PrimaryDomain
-        - !Ref SecondaryDomain
-      ValidationMethod: DNS
+      Bucket: !Ref WebS3Bucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Deny
+            NotPrincipal:
+              AWS: !Ref WebsiteCloudfrontOriginId
+            Action:
+              - 's3:GetObject'
+            Resource:
+              - Fn::Join:
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - Fn::GetAtt:
+                        - WebS3Bucket
+                        - Arn
+                    - '/*'
+          - Effect: Allow
+            Principal:
+              AWS: !Ref WebsiteCloudfrontOriginId
+            Action:
+              - 's3:GetObject'
+            Resource:
+              - Fn::Join:
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - Fn::GetAtt:
+                        - WebS3Bucket
+                        - Arn
+                    - '/*'
 
-#  PrimaryDomainVerification:
-#    Type: AWS::Route53::RecordSet
-#    Properties:
-#      HostedZoneId: Z56MR00FY1VMM
-#      Name: !GetAtt WebsiteSslCertificate.Domain
-#      Type: CNAME
+  WebsiteCloudfrontOriginId:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref WebS3Bucket
+  WebsiteCloudFront:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref PrimaryDomain
+          - !Ref SecondaryDomain
+        CacheBehaviors:
+          AllowedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          DefaultTTL: 86400
+          MaxTTL: 31536000
+          MinTTL: 0
+          SmoothStreaming: false
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
+        Enabled: true
+        IPV6Enabled: true
+        Origins:
+          - !Ref WebS3Bucket
+        PriceClass: PriceClass_All
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CertificateArn
+          CloudFrontDefaultCertificate: false
+          IamCertificateId: String
+          MinimumProtocolVersion: TLSv1.2_2018
+          SslSupportMethod: sni-only
 
-#      AliasTarget:
-#        AliasTarget
-#      Comment: String
-#      Failover: String
-#      GeoLocation:
-#        GeoLocation
-#      HealthCheckId: String
-#      HostedZoneId: String
-#      HostedZoneName: String
-#      MultiValueAnswer: Boolean
-#      Name: String
-#      Region: String
-#      ResourceRecords:
-#        - String
-#      SetIdentifier: String
-#      TTL: String
-#      Type: String
-#      Weight: Integer
+  PrimaryDomainRecordV4:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Ref PrimaryDomain
+      Type: A
+      AliasTarget:
+        DNSName: !Ref WebsiteCloudFront
+        EvaluateTargetHealth: true
+
+  PrimaryDomainRecordV6:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Ref PrimaryDomain
+      Type: AAAA
+      AliasTarget:
+        DNSName: !Ref WebsiteCloudFront
+        EvaluateTargetHealth: true
+
+  SecondaryDomainRecordV4:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Ref SecondaryDomain
+      Type: A
+      AliasTarget:
+        DNSName: !Ref WebsiteCloudFront
+        EvaluateTargetHealth: true
+
+  SecondaryDomainRecordV6:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: !Ref SecondaryDomain
+      Type: AAAA
+      AliasTarget:
+        DNSName: !Ref WebsiteCloudFront
+        EvaluateTargetHealth: true
 
 #  FetchLambdaRole:
 #    Type: 'AWS::IAM::Role'

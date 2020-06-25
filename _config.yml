@@ -23,7 +23,7 @@ url: "https://www.haydenk.com" # the base hostname & protocol for your site, e.g
 
 sass:
   sass_dir: _sass
-  style: compressed
+  style: expanded
 
 compress_html:
   clippings: all

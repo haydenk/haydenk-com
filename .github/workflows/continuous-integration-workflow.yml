@@ -22,9 +22,7 @@ jobs:
       - name: Build Jekyll Site
         env:
           JEKYLL_ENV: production
-        run: |
-          bundle exec jekyll build
-          find _site -type f -exec gzip -v9 {} \; -exec mv -v {}.gz {} \;
+        run: bundle exec jekyll build
 
       - name: Test Jekyll Site
         run: bundle exec htmlproofer ./_site --disable-external
@@ -45,6 +43,12 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
+    env:
+      WWW_S3_BUCKET_NAME: haydenk-com-4adc604
+      PRIMARY_DOMAIN: www.haydenk.com
+      SECONDARY_DOMAIN: haydenk.com
+      AWS_REGION: us-east-1
+
     steps:
       - name: Download Artifacts
         uses: actions/download-artifact@v2
@@ -54,13 +58,15 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${AWS_REGION}
 
-      - name: Get ACM Certificate ARN
+      - name: Deploy Cloudformation Stack
         run: |
-          export CERTIFICATE_ARN=$(aws acm list-certificates --output text | grep www.haydenk.com | awk '{print $2}')
-          echo $CERTIFICATE_ARN
-
-      - name: Print current directory after getting artifacts
-        shell: bash
-        run: ls -lR
+          export CERTIFICATE_ARN=$(aws acm list-certificates --output text | grep $PRIMARY_DOMAIN | awk '{print $2}')
+          aws cloudformation deploy \
+              --stack-name haydenk-www-stack \
+              --template-file cfn/website-stack.yml \
+              --parameter-overrides WebsiteS3Bucket=$WWW_S3_BUCKET_NAME \
+                                    PrimaryDomain=$PRIMARY_DOMAIN \
+                                    SecondaryDomain=$SECONDARY_DOMAIN \
+                                    CertificateArn=$CERTIFICATE_ARN
