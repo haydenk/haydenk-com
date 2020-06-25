@@ -66,3 +66,4 @@ build-iPhoneSimulator/
 # .rubocop-https?--*
 
 # End of https://www.gitignore.io/api/ruby,jekyll
+.python-version
