@@ -62,15 +62,18 @@ jobs:
           aws-region: us-east-1
 
       - name: Deploy Cloudformation Stack
-        run: |
-          aws cloudformation deploy \
-              --stack-name haydenk-com-stack \
-              --template-file cfn/website-stack.yml \
-              --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-              --parameter-overrides \
-                WebsiteS3Bucket=${WEBSITE_BUCKET_NAME} \
-                HostedZone=${HOSTED_ZONE_ID} \
-                CertificateId=${ACM_CERTIFICATE_ID} \
-                PrimaryDomain=${PRIMARY_DOMAIN} \
-                SecondaryDomain=${SECONDARY_DOMAIN} && \
-          aws s3 sync _site s3://${WEBSITE_BUCKET_NAME}
+        id: haydenk-com-stack
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: haydenk-com-stack
+          template: cfn/website-stack.yml
+          no-fail-on-empty-changeset: "1"
+          parameter-overrides: >-
+            WebsiteS3Bucket=${{ env.WEBSITE_BUCKET_NAME }},
+            HostedZone=${{ env.HOSTED_ZONE_ID }},
+            CertificateId=${{ env.ACM_CERTIFICATE_ID }},
+            PrimaryDomain=${{ env.PRIMARY_DOMAIN }},
+            SecondaryDomain=${{ env. SECONDARY_DOMAIN }}
+
+      - name: Deploy Site to S3
+        run: aws s3 sync --delete --cache-control max-age=3600 _site s3://${WEBSITE_BUCKET_NAME}
