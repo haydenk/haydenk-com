@@ -39,3 +39,4 @@ exclude:
   - Dockerfile
   - _sass
   - cfn
+  - .idea
