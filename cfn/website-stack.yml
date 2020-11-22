@@ -64,6 +64,110 @@ Resources:
       CloudFrontOriginAccessIdentityConfig:
         Comment: !Ref WebS3Bucket
 
+  WebsiteHostnameRedirectLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: hostname-redirect-lambda-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - edgelambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /service-role/
+      Policies:
+        - PolicyName: LambdaExecutionPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: 'logs:CreateLogGroup'
+                Resource:
+                  - Fn::Join:
+                      - ':'
+                      - - 'arn:aws:logs'
+                        - !Ref AWS::Region
+                        - !Ref AWS::AccountId
+                        - '*'
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource:
+                  - Fn::Join:
+                      - ':'
+                      - - 'arn:aws:logs'
+                        - !Ref AWS::Region
+                        - !Ref AWS::AccountId
+                        - '*'
+              - Effect: Allow
+                Action: 'logs:CreateLogGroup'
+                Resource:
+                  - Fn::Join:
+                      - ':'
+                      - - 'arn:aws:logs'
+                        - !Ref AWS::Region
+                        - !Ref AWS::AccountId
+                        - 'log-group'
+                        - Fn::Join:
+                            - '/'
+                            - - '/aws/lambda'
+                              - 'haydenk-com-hostname-redirect'
+                        - '*'
+
+  WebsiteHostnameRedirectLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: haydenk-com-hostname-redirect
+      Description: |
+        This is an embedded lambda@edge in CloudFront
+        that redirects any request where the hostname
+        is not the same as the primary domain TO the primary domain.
+      Role: !GetAtt WebsiteHostnameRedirectLambdaRole.Arn
+      Code:
+        ZipFile: |
+          'use strict';
+          exports.handler = async (event, context) => {
+              const request = event.Records[0].cf.request;
+              const headers = request.headers;
+              const primary_host_url = 'haydenk.com';
+
+              if (headers.host[0].value == primary_host_url) {
+                  return request;
+              }
+
+              /*
+              * Generate HTTP redirect response with 302 status code and Location header.
+              */
+              let redirectUrl = `https://${primary_host_url}${request.uri}`;
+              if (request.querystring) {
+                  redirectUrl += `?${request.querystring}`
+              }
+              const response = {
+                  status: '302',
+                  statusDescription: 'Found',
+                  headers: {
+                      location: [{
+                          key: 'Location',
+                          value: redirectUrl,
+                      }],
+                  },
+              };
+              return response;
+          };
+      Handler: index.handler
+      Runtime: nodejs12.x
+      TracingConfig:
+        Mode: Active
+
+  WebsiteHostnameRedirectLambdaVersionA:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName: !Ref WebsiteHostnameRedirectLambda
+
   WebsiteCloudFront:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -84,6 +188,10 @@ Resources:
           MinTTL: 0
           SmoothStreaming: false
           ViewerProtocolPolicy: redirect-to-https
+          LambdaFunctionAssociations:
+            - EventType: viewer-request
+              IncludeBody: false
+              LambdaFunctionARN: !Ref WebsiteHostnameRedirectLambdaVersionA
         DefaultRootObject: index.html
         Enabled: true
         HttpVersion: http2
@@ -159,3 +267,15 @@ Resources:
         HostedZoneId: 'Z2FDTNDATAQYW2'
         DNSName: !GetAtt WebsiteCloudFront.DomainName
         EvaluateTargetHealth: true
+
+Outputs:
+  RedirectLambdaName:
+    Value: !Ref WebsiteHostnameRedirectLambda
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-WebsiteHostnameRedirectLambda"
+  RedirectLambdaArn:
+    Value: !GetAtt WebsiteHostnameRedirectLambda.Arn
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-WebsiteHostnameRedirectLambdaArn"
