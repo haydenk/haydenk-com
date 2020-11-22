@@ -22,7 +22,7 @@ jobs:
       - name: Build Jekyll Site
         env:
           JEKYLL_ENV: production
-        run: bundle exec jekyll build
+        run: bundle exec jekyll build --config _config.yml,_config_deploy.yml
 
       - name: Test Jekyll Site
         run: bundle exec htmlproofer ./_site --disable-external
