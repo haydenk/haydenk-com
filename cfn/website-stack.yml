@@ -7,7 +7,7 @@ Parameters:
     Type: String
   SecondaryDomain:
     Type: String
-  CertificateArn:
+  CertificateId:
     Type: String
   HostedZone:
     Type: String
@@ -105,7 +105,13 @@ Resources:
                     - !Ref WebsiteCloudfrontOriginId
         PriceClass: PriceClass_All
         ViewerCertificate:
-          AcmCertificateArn: !Ref CertificateArn
+          AcmCertificateArn:
+            Fn::Join:
+              - ':'
+              - - 'arn:aws:acm'
+                - !Ref AWS::Region
+                - !Ref AWS::AccountId
+                - !Join ['/', ['certificate', !Ref CertificateId]]
           MinimumProtocolVersion: TLSv1.2_2019
           SslSupportMethod: sni-only
 
