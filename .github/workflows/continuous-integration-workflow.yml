@@ -14,7 +14,7 @@ jobs:
       - name: Setup Ruby
         uses: actions/setup-ruby@v1
         with:
-          ruby-version: 2.7.1
+          ruby-version: 2.7
 
       - name: Install dependencies
         run: bundle install
@@ -44,7 +44,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     env:
-      WWW_S3_BUCKET_NAME: haydenk-com-4adc604
+      WEBSITE_BUCKET_NAME: haydenk-com-544e760
       PRIMARY_DOMAIN: www.haydenk.com
       SECONDARY_DOMAIN: haydenk.com
       AWS_REGION: us-east-1
@@ -62,11 +62,13 @@ jobs:
 
       - name: Deploy Cloudformation Stack
         run: |
-          export CERTIFICATE_ARN=$(aws acm list-certificates --output text | grep $PRIMARY_DOMAIN | awk '{print $2}')
           aws cloudformation deploy \
-              --stack-name haydenk-www-stack \
+              --stack-name haydenk-com-stack \
               --template-file cfn/website-stack.yml \
-              --parameter-overrides WebsiteS3Bucket=$WWW_S3_BUCKET_NAME \
-                                    PrimaryDomain=$PRIMARY_DOMAIN \
-                                    SecondaryDomain=$SECONDARY_DOMAIN \
-                                    CertificateArn=$CERTIFICATE_ARN
+              --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+              --parameter-overrides \
+                WebsiteS3Bucket=$WEBSITE_BUCKET_NAME \
+                HostedZone=$HOSTED_ZONE_ID \
+                CertificateId=$ACM_CERTIFICATE_ID \
+                PrimaryDomain=$PRIMARY_DOMAIN \
+                SecondaryDomain=$SECONDARY_DOMAIN
