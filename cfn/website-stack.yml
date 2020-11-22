@@ -86,6 +86,7 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
         DefaultRootObject: index.html
         Enabled: true
+        HttpVersion: http2
         IPV6Enabled: true
         Origins:
           - Id: !Ref WebS3Bucket
