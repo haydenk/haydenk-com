@@ -71,7 +71,7 @@ jobs:
             HostedZone=${{ secrets.HOSTED_ZONE_ID }},
             CertificateId=${{ secrets.ACM_CERTIFICATE_ID }},
             PrimaryDomain=${{ env.PRIMARY_DOMAIN }},
-            SecondaryDomain=${{ env. SECONDARY_DOMAIN }}
+            SecondaryDomain=${{ env.SECONDARY_DOMAIN }}
 
       - name: Deploy Site to S3
         run: aws s3 sync --delete --cache-control max-age=3600 _site s3://${WEBSITE_BUCKET_NAME}
