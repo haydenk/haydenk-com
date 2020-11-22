@@ -11,6 +11,15 @@ Parameters:
     Type: String
   HostedZone:
     Type: String
+  ManagedCachingOptimizedPolicy:
+    Type: String
+    Default: 658327ea-f89d-4fab-a63d-7e88639e58f6
+  ManagedOriginRequestPolicyUserAgentRefererHeaders:
+    Type: String
+    Default: acba4595-bd28-49b8-b9fe-13317c0390fa
+  ProjectIdTag:
+    Type: String
+    Default: haydenk.com
 Resources:
   WebS3Bucket:
     Type: AWS::S3::Bucket
@@ -21,6 +30,9 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
+      Tags:
+        - Key: ProjectId
+          Value: !Ref ProjectIdTag
 
   WebS3BucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -117,6 +129,9 @@ Resources:
                             - - '/aws/lambda'
                               - 'haydenk-com-hostname-redirect'
                         - '*'
+      Tags:
+        - Key: ProjectId
+          Value: !Ref ProjectIdTag
 
   WebsiteHostnameRedirectLambda:
     Type: AWS::Lambda::Function
@@ -162,6 +177,9 @@ Resources:
       Runtime: nodejs12.x
       TracingConfig:
         Mode: Active
+      Tags:
+        - Key: ProjectId
+          Value: !Ref ProjectIdTag
 
   WebsiteHostnameRedirectLambdaVersionA:
     Type: AWS::Lambda::Version
@@ -181,11 +199,8 @@ Resources:
             - GET
             - HEAD
           Compress: true
-          ForwardedValues:
-            QueryString: false
-          DefaultTTL: 86400
-          MaxTTL: 31536000
-          MinTTL: 0
+          CachePolicyId: !Ref ManagedCachingOptimizedPolicy
+          OriginRequestPolicyId: !Ref ManagedOriginRequestPolicyUserAgentRefererHeaders
           SmoothStreaming: false
           ViewerProtocolPolicy: redirect-to-https
           LambdaFunctionAssociations:
@@ -223,6 +238,9 @@ Resources:
                 - !Join ['/', ['certificate', !Ref CertificateId]]
           MinimumProtocolVersion: TLSv1.2_2019
           SslSupportMethod: sni-only
+      Tags:
+        - Key: ProjectId
+          Value: !Ref ProjectIdTag
 
   PrimaryDomainRecordV4:
     Type: AWS::Route53::RecordSet
