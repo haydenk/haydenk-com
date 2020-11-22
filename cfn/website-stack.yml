@@ -11,7 +11,6 @@ Parameters:
     Type: String
   HostedZone:
     Type: String
-    Default: Z56MR00FY1VMM
 Resources:
   WebS3Bucket:
     Type: AWS::S3::Bucket
@@ -32,36 +31,39 @@ Resources:
         Statement:
           - Effect: Deny
             NotPrincipal:
-              AWS: !Ref WebsiteCloudfrontOriginId
+              AWS:
+                Fn::Join:
+                  - ' '
+                  - - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity'
+                    - !Ref WebsiteCloudfrontOriginId
             Action:
               - 's3:GetObject'
             Resource:
               - Fn::Join:
-                  - ''
-                  - - 'arn:aws:s3:::'
-                    - Fn::GetAtt:
-                        - WebS3Bucket
-                        - Arn
-                    - '/*'
+                  - '/'
+                  - - Fn::GetAtt: WebS3Bucket.Arn
+                    - '*'
           - Effect: Allow
             Principal:
-              AWS: !Ref WebsiteCloudfrontOriginId
+              AWS:
+                Fn::Join:
+                  - ' '
+                  - - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity'
+                    - !Ref WebsiteCloudfrontOriginId
             Action:
               - 's3:GetObject'
             Resource:
               - Fn::Join:
-                  - ''
-                  - - 'arn:aws:s3:::'
-                    - Fn::GetAtt:
-                        - WebS3Bucket
-                        - Arn
-                    - '/*'
+                  - '/'
+                  - - Fn::GetAtt: WebS3Bucket.Arn
+                    - '*'
 
   WebsiteCloudfrontOriginId:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: !Ref WebS3Bucket
+
   WebsiteCloudFront:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -69,11 +71,14 @@ Resources:
         Aliases:
           - !Ref PrimaryDomain
           - !Ref SecondaryDomain
-        CacheBehaviors:
+        DefaultCacheBehavior:
+          TargetOriginId: !Ref WebS3Bucket
           AllowedMethods:
             - GET
             - HEAD
           Compress: true
+          ForwardedValues:
+            QueryString: false
           DefaultTTL: 86400
           MaxTTL: 31536000
           MinTTL: 0
@@ -83,13 +88,25 @@ Resources:
         Enabled: true
         IPV6Enabled: true
         Origins:
-          - !Ref WebS3Bucket
+          - Id: !Ref WebS3Bucket
+            DomainName:
+              Fn::Join:
+                - '.'
+                - - !Ref WebS3Bucket
+                  - 's3'
+                  - !Ref AWS::Region
+                  - 'amazonaws.com'
+            S3OriginConfig:
+              OriginAccessIdentity:
+                Fn::Join:
+                  - '/'
+                  - - 'origin-access-identity'
+                    - 'cloudfront'
+                    - !Ref WebsiteCloudfrontOriginId
         PriceClass: PriceClass_All
         ViewerCertificate:
           AcmCertificateArn: !Ref CertificateArn
-          CloudFrontDefaultCertificate: false
-          IamCertificateId: String
-          MinimumProtocolVersion: TLSv1.2_2018
+          MinimumProtocolVersion: TLSv1.2_2019
           SslSupportMethod: sni-only
 
   PrimaryDomainRecordV4:
@@ -99,7 +116,8 @@ Resources:
       Name: !Ref PrimaryDomain
       Type: A
       AliasTarget:
-        DNSName: !Ref WebsiteCloudFront
+        HostedZoneId: 'Z2FDTNDATAQYW2'
+        DNSName: !GetAtt WebsiteCloudFront.DomainName
         EvaluateTargetHealth: true
 
   PrimaryDomainRecordV6:
@@ -109,7 +127,8 @@ Resources:
       Name: !Ref PrimaryDomain
       Type: AAAA
       AliasTarget:
-        DNSName: !Ref WebsiteCloudFront
+        HostedZoneId: 'Z2FDTNDATAQYW2'
+        DNSName: !GetAtt WebsiteCloudFront.DomainName
         EvaluateTargetHealth: true
 
   SecondaryDomainRecordV4:
@@ -119,7 +138,8 @@ Resources:
       Name: !Ref SecondaryDomain
       Type: A
       AliasTarget:
-        DNSName: !Ref WebsiteCloudFront
+        HostedZoneId: 'Z2FDTNDATAQYW2'
+        DNSName: !GetAtt WebsiteCloudFront.DomainName
         EvaluateTargetHealth: true
 
   SecondaryDomainRecordV6:
@@ -129,157 +149,6 @@ Resources:
       Name: !Ref SecondaryDomain
       Type: AAAA
       AliasTarget:
-        DNSName: !Ref WebsiteCloudFront
+        HostedZoneId: 'Z2FDTNDATAQYW2'
+        DNSName: !GetAtt WebsiteCloudFront.DomainName
         EvaluateTargetHealth: true
-
-#  FetchLambdaRole:
-#    Type: 'AWS::IAM::Role'
-#    Properties:
-#      AssumeRolePolicyDocument:
-#        Version: 2012-10-17
-#        Statement:
-#          - Effect: Allow
-#            Principal:
-#              Service:
-#                - lambda.amazonaws.com
-#            Action:
-#              - 'sts:AssumeRole'
-#      Path: /service-role/
-#      Policies:
-#        - PolicyName: ConedTcisLambdaExecutionPolicy
-#          PolicyDocument:
-#            Version: 2012-10-17
-#            Statement:
-#              - Effect: Allow
-#                Action: 'logs:CreateLogGroup'
-#                Resource:
-#                  - Fn::Join:
-#                      - ':'
-#                      - - 'arn:aws:logs'
-#                        - !Ref AWS::Region
-#                        - !Ref AWS::AccountId
-#                        - '*'
-#              - Effect: Allow
-#                Action:
-#                  - 'logs:CreateLogStream'
-#                  - 'logs:PutLogEvents'
-#                Resource:
-#                  - Fn::Join:
-#                      - ':'
-#                      - - 'arn:aws:logs'
-#                        - !Ref AWS::Region
-#                        - !Ref AWS::AccountId
-#                        - '*'
-#              - Effect: Allow
-#                Action: 'logs:CreateLogGroup'
-#                Resource:
-#                  - Fn::Join:
-#                      - ':'
-#                      - - 'arn:aws:logs'
-#                        - !Ref AWS::Region
-#                        - !Ref AWS::AccountId
-#                        - 'log-group'
-#                        - Fn::Join:
-#                            - '/'
-#                            - - '/aws/lambda'
-#                              - 'coned-tcis-fetch'
-#                        - '*'
-#        - PolicyName: ConedTcisSSMAccessPolicy
-#          PolicyDocument:
-#            Version: 2012-10-17
-#            Statement:
-#              - Effect: Allow
-#                Action: 'ssm:GetParametersByPath'
-#                Resource:
-#                  - Fn::Join:
-#                      - ':'
-#                      - - 'arn:aws:ssm'
-#                        - !Ref AWS::Region
-#                        - !Ref AWS::AccountId
-#                        - Fn::Join:
-#                            - '/'
-#                            - - 'parameter'
-#                              - '*/coned/tcis'
-#                  - Fn::Join:
-#                      - ':'
-#                      - - 'arn:aws:ssm'
-#                        - !Ref AWS::Region
-#                        - !Ref AWS::AccountId
-#                        - Fn::Join:
-#                            - '/'
-#                            - - 'parameter'
-#                              - '*/rds/level5'
-#              - Effect: Allow
-#                Action: 'ssm:DescribeParameters'
-#                Resource: '*'
-#        - PolicyName: ConedTcisS3AccessPolicy
-#          PolicyDocument:
-#            Version: 2012-10-17
-#            Statement:
-#              - Effect: Allow
-#                Action:
-#                  - 's3:ListBucket'
-#                  - 's3:GetObject'
-#                  - 's3:PutObject'
-#                  - 's3:DeleteObject'
-#                Resource:
-#                  - Fn::Join:
-#                      - ''
-#                      - - 'arn:aws:s3:::'
-#                        - !Ref DropBucketName
-#                  - Fn::Join:
-#                      - ''
-#                      - - 'arn:aws:s3:::'
-#                        - !Ref DropBucketName
-#                        - '/*'
-#        - PolicyName: ConedTcisDynamoDBPolicy
-#          PolicyDocument:
-#            Version: 2012-10-17
-#            Statement:
-#              - Effect: Allow
-#                Action: 'dynamodb:PutItem'
-#                Resource:
-#                  Fn::GetAtt:
-#                    - FetchedDataTable
-#                    - Arn
-#  LambdaProcessFunction:
-#    Type: 'AWS::Lambda::Function'
-#    Properties:
-#      Code:
-#        S3Bucket: !Ref LambdaCodeBucket
-#        S3Key: !Ref ProcessLambdaKey
-#      Description: |
-#        Processes the data fetched from TCIS
-#        and saved to an S3 object in level5-data bucket
-#        Triggered by: DynamoDB insert
-#      Environment:
-#        Variables:
-#          DROP_BUCKET: !Ref DropBucketName
-#          LOG_LEVEL: !Ref LogLevel
-#          TIME_ZONE: !Ref TimeZone
-#          DB_SSM_PATH: !Ref TcisProcessRdsSsmPath
-#      FunctionName: tcis-process-fetch
-#      Handler: lambda_function.lambda_handler
-#      MemorySize: 256
-#      Role:
-#        Fn::GetAtt:
-#          - ProcessLambdaRole
-#          - Arn
-#      Runtime: python3.8
-#      Timeout: 60
-#Outputs:
-#  FetchLambdaRole:
-#    Description: "The IAM role for the Coned TCIS Fetch Lambda"
-#    Value: !Ref FetchLambdaRole
-#    Export:
-#      Name:
-#        Fn::Sub: "${AWS::StackName}-FetchLambdaRoleArn"
-#  FetchLambdaArn:
-#    Description: "Coned TCIS Fetch Lambda"
-#    Value:
-#      Fn::GetAtt:
-#        - LambdaFetchFunction
-#        - Arn
-#    Export:
-#      Name:
-#        Fn::Sub: "${AWS::StackName}-LambdaFetchFunction"
