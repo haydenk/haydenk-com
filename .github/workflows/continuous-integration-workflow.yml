@@ -69,8 +69,9 @@ jobs:
               --template-file cfn/website-stack.yml \
               --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
               --parameter-overrides \
-                WebsiteS3Bucket=$WEBSITE_BUCKET_NAME \
-                HostedZone=$HOSTED_ZONE_ID \
-                CertificateId=$ACM_CERTIFICATE_ID \
-                PrimaryDomain=$PRIMARY_DOMAIN \
-                SecondaryDomain=$SECONDARY_DOMAIN
+                WebsiteS3Bucket=${WEBSITE_BUCKET_NAME} \
+                HostedZone=${HOSTED_ZONE_ID} \
+                CertificateId=${ACM_CERTIFICATE_ID} \
+                PrimaryDomain=${PRIMARY_DOMAIN} \
+                SecondaryDomain=${SECONDARY_DOMAIN} && \
+          aws s3 sync _site s3://${WEBSITE_BUCKET_NAME}
