@@ -47,6 +47,8 @@ jobs:
       WEBSITE_BUCKET_NAME: haydenk-com-544e760
       PRIMARY_DOMAIN: www.haydenk.com
       SECONDARY_DOMAIN: haydenk.com
+      HOSTED_ZONE_ID: ${{ secrets.HOSTED_ZONE_ID }}
+      ACM_CERTIFICATE_ID: ${{ secrets.ACM_CERTIFICATE_ID }}
       AWS_REGION: us-east-1
 
     steps:
