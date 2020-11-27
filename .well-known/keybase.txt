@@ -1,0 +1,75 @@
+==================================================================
+https://keybase.io/hayd3nk
+--------------------------------------------------------------------
+
+I hereby claim:
+
+  * I am an admin of https://www.haydenk.com
+  * I am hayd3nk (https://keybase.io/hayd3nk) on keybase.
+  * I have a public key with fingerprint BAC4 3EE8 0912 F651 AEE7  7C31 C8F9 8A88 4708 F57F
+
+To do so, I am signing this object:
+
+{
+  "body": {
+    "key": {
+      "eldest_kid": "0120127fb93796ca32af217ccf0257e50bf7aecc77e1c6b18a4aee774edd392d49140a",
+      "fingerprint": "bac43ee80912f651aee77c31c8f98a884708f57f",
+      "host": "keybase.io",
+      "key_id": "c8f98a884708f57f",
+      "kid": "0101e04f45827ea08ce874002abf8899982aa7f958dafbf6ac5084fa534db7a136890a",
+      "uid": "827debfdfd928daf4c2d27df75e44e19",
+      "username": "hayd3nk"
+    },
+    "service": {
+      "hostname": "www.haydenk.com",
+      "protocol": "https:"
+    },
+    "type": "web_service_binding",
+    "version": 1
+  },
+  "ctime": 1606501533,
+  "expire_in": 157680000,
+  "prev": "23f34828365a90b4d3db21e719b59f94b36bb00a1b984cf832139662d7411f3f",
+  "seqno": 13,
+  "tag": "signature"
+}
+
+which yields the signature:
+
+-----BEGIN PGP MESSAGE-----
+Version: Keybase OpenPGP v2.1.13
+Comment: https://keybase.io/crypto
+
+yMNwAnicbZJ9UFRVGMZ3CQhwSCJQdIzG22jBMHjP/b6bOOpYDARZogZGbPfjHLgs
+7C67F1jYIZ0pbU0rvzZmECgtobSwhKXkQyEJUalBWJUZcxplWAlqmtA0Apzu3dH/
+OnNmzpx3nuf3Pued0xf9mCHKODDzvic94u/txku9deUGc++GBjcm2uQqzOTGLDB4
+wBIZOlWzRZExE4YDQtssEnmS5RlJIAkBEYCVJIQTNAtpXESsACWJZSGQGBFwAiVA
+yLIUlGWSJ2SKBxQuYCkYUqyF0GF3KFZVw4qCRJEQcjgPCMTQIOiRSCBxiOcEjqNY
+nEM0izRjkc2pO7RwouCEqYpNq2kXczDe/+gf5cYBxClE0RzBQgHnJMixFI4Tgog4
+jud5jhAEFvE0JwtIRIwg0ThHIYEmKVlkBUAyHB/MXR7EaRAZikhGMk/oDkoiZK2E
+WBpSFAS8LnRCh1UohZq6SKiSSasFq0nBtGKFIkF9rvpDHgoqKytTdRG0WlIlW6nm
+tjtsqk2ylehuVbU7TbpZrbIH1VA0P+SYRcUqa5PUHBXQ4VRsVswENKWkKjoYMDhD
+44AmyRQMuuyKA5oVXUGzDIdrS+8DKzQkQSKS4giOZGiBx0VKJmWRAJAFvEjziKdE
+khFFHBeAyHOUhDiSACTPMITMUgAgUp+zE5ZZbRpba6UKhRrTqRRaBbXcAbGaH3rz
+Qw3GKEN4WIj+xQxRkTGPPl7e/oUPsMWLEoxvhFoCfv+o17N84jCR8U735cwzZfse
+v3fVfhSVtB7xuMb+SpneFZ9Jr9u06ri7+5jv620gvHPTz/6feFN488dz1QZ63JU0
+tOVT37ntawP+38Tr48O3Wqu8Tem1xxPX+cYufvV7XuwF+m2vv911s6URxN27xi9O
+8n7ecGyyMaKtbWnHsxWr+0DzaxmB3GLnjaH+xDEwf/5MTb99r8+9KxNfPvjB3jk1
+a4k3yW0uvjrV85Gfrdkc6mrvKg4Z3lbUlP9mOazLdtMHKkzZK9Ibds+1rp8aXZW4
+7GD4HV/CZARMMqgzW3Y7atp3NsfW34f2nh2xB+tqJ8xXhnNObdxn+Sym3tttLO3v
+7MrK85725Ic1jjgWcAMoOu3EkbUpU0nMhfQ+uvCZqZy00wUh5uenj+6MDF0z30Eu
+nEy9Ztxg/yR7ev7FG/OXAgf63g3Edf1qyvuy4Ik/ZqVk/2DO6uQdrWvCLreD67Vv
+3b4y2XKxqrp0iKm+88WKnrLnYj0FYTMveJNHNpZ/G22ri2taWv3KxBIX817aqbrv
+en105lyy+nTLYHj9grOvKwk3X039s60p9+6AvCzm5J7Ol0IORbotfbhi/jFqdvYp
+i+fDf8+L4+d+ib+1suf+/tHNKwPrs/6RDweoBx3ji5Jtlu9fDjm5Fjvre1K4m7s1
+sR1Zt574Jv5Q68jtjP8A2fXG6w==
+=+Nc6
+-----END PGP MESSAGE-----
+
+And finally, I am proving ownership of this host by posting or
+appending to this document.
+
+View my publicly-auditable identity here: https://keybase.io/hayd3nk
+
+==================================================================

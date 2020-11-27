@@ -15,12 +15,6 @@ description: >- # this means to ignore newlines until "baseurl:"
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://www.haydenk.com" # the base hostname & protocol for your site, e.g. http://example.com
 
-# Build settings
-#theme: minima
-#plugins:
-#  - jekyll-press
-#  - jekyll-feed
-
 sass:
   sass_dir: _sass
   style: expanded
