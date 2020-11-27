@@ -78,6 +78,6 @@ jobs:
         run: |
           aws s3 sync --delete --cache-control max-age=3600 _site s3://${WEBSITE_BUCKET_NAME} && \
           echo $PRIMARY_DOMAIN && \
-          aws cloudfront list-distributions --output json | jq -r --arg PRIMARY_DOMAIN "${PRIMARY_DOMAIN}" '.DistributionList.Items[] | select(.Aliases.Items[] | contains($PRIMARY_DOMAIN)) && \
+          aws cloudfront list-distributions --output json | jq -r --arg PRIMARY_DOMAIN "${PRIMARY_DOMAIN}" '.DistributionList.Items[] | select(.Aliases.Items[] | contains($PRIMARY_DOMAIN)') && \
           DISTRIBUTION_ID=$(aws cloudfront list-distributions --output json | jq -r --arg PRIMARY_DOMAIN "${PRIMARY_DOMAIN}" '.DistributionList.Items[] | select(.Aliases.Items[] | contains($PRIMARY_DOMAIN)) | .Id') && \
           aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/"
