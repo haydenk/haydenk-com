@@ -29,6 +29,9 @@ compress_html:
   profile: false
   startings: []
 
+include:
+  - .well-known
+
 exclude:
   - Dockerfile
   - _sass

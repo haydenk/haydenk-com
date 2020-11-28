@@ -43,32 +43,24 @@ Resources:
         Statement:
           - Effect: Deny
             NotPrincipal:
-              AWS:
-                Fn::Join:
-                  - ' '
-                  - - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity'
-                    - !Ref WebsiteCloudfrontOriginId
+              AWS: !Sub
+                - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity {OriginId}'
+                - { OriginId: !Ref WebsiteCloudfrontOriginId }
             Action:
               - 's3:GetObject'
-            Resource:
-              - Fn::Join:
-                  - '/'
-                  - - Fn::GetAtt: WebS3Bucket.Arn
-                    - '*'
+            Resource: !Sub
+              - '{BucketArn}/*'
+              - { BucketArn: !GetAtt WebS3Bucket.Arn }
           - Effect: Allow
             Principal:
-              AWS:
-                Fn::Join:
-                  - ' '
-                  - - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity'
-                    - !Ref WebsiteCloudfrontOriginId
+              AWS: !Sub
+                - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity {OriginId}'
+                - { OriginId: !Ref WebsiteCloudfrontOriginId }
             Action:
               - 's3:GetObject'
-            Resource:
-              - Fn::Join:
-                  - '/'
-                  - - Fn::GetAtt: WebS3Bucket.Arn
-                    - '*'
+            Resource: !Sub
+              - '{BucketArn}/*'
+              - { BucketArn: !GetAtt WebS3Bucket.Arn }
 
   WebsiteCloudfrontOriginId:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
@@ -97,38 +89,21 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: 'logs:CreateLogGroup'
-                Resource:
-                  - Fn::Join:
-                      - ':'
-                      - - 'arn:aws:logs'
-                        - !Ref AWS::Region
-                        - !Ref AWS::AccountId
-                        - '*'
+                Resource: !Sub
+                  - 'arn:aws:logs:{Region}:{AccountId}:*'
+                  - { Region: AWS::Region, AccountId: AWS::AccountId }
               - Effect: Allow
                 Action:
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
-                Resource:
-                  - Fn::Join:
-                      - ':'
-                      - - 'arn:aws:logs'
-                        - !Ref AWS::Region
-                        - !Ref AWS::AccountId
-                        - '*'
+                Resource: !Sub
+                  - 'arn:aws:logs:{Region}:{AccountId}:*'
+                  - { Region: AWS::Region, AccountId: AWS::AccountId }
               - Effect: Allow
                 Action: 'logs:CreateLogGroup'
-                Resource:
-                  - Fn::Join:
-                      - ':'
-                      - - 'arn:aws:logs'
-                        - !Ref AWS::Region
-                        - !Ref AWS::AccountId
-                        - 'log-group'
-                        - Fn::Join:
-                            - '/'
-                            - - '/aws/lambda'
-                              - 'haydenk-com-hostname-redirect'
-                        - '*'
+                Resource: !Sub
+                  - 'arn:aws:logs:{Region}:{AccountId}:log-group:/aws/lambda/{LogGroupName}:*'
+                  - { Region: AWS::Region, AccountId: AWS::AccountId, LogGroupName: !Ref WebsiteHostnameRedirectLambda }
       Tags:
         - Key: ProjectId
           Value: !Ref ProjectIdTag
@@ -213,29 +188,18 @@ Resources:
         IPV6Enabled: true
         Origins:
           - Id: !Ref WebS3Bucket
-            DomainName:
-              Fn::Join:
-                - '.'
-                - - !Ref WebS3Bucket
-                  - 's3'
-                  - !Ref AWS::Region
-                  - 'amazonaws.com'
+            DomainName: !Sub
+              - '{BucketName}.s3.{Region}.amazonaws.com'
+              - { BucketName: !Ref WebS3Bucket, Region: AWS::Region }
             S3OriginConfig:
-              OriginAccessIdentity:
-                Fn::Join:
-                  - '/'
-                  - - 'origin-access-identity'
-                    - 'cloudfront'
-                    - !Ref WebsiteCloudfrontOriginId
+              OriginAccessIdentity: !Sub
+                - 'origin-access-identity/cloudfront/{OriginId}'
+                - { OriginId: !Ref WebsiteCloudfrontOriginId }
         PriceClass: PriceClass_All
         ViewerCertificate:
-          AcmCertificateArn:
-            Fn::Join:
-              - ':'
-              - - 'arn:aws:acm'
-                - !Ref AWS::Region
-                - !Ref AWS::AccountId
-                - !Join ['/', ['certificate', !Ref CertificateId]]
+          AcmCertificateArn: !Sub
+            - 'arn:aws:acm:{Region}:{AccountId}:certificate/{CertificateId}'
+            - { Region: AWS::Region, AccountId: AWS::AccountId, CertificateId: !Ref CertificateId }
           MinimumProtocolVersion: TLSv1.2_2019
           SslSupportMethod: sni-only
       Tags:
