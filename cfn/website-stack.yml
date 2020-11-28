@@ -47,22 +47,22 @@ Resources:
           - Effect: Deny
             NotPrincipal:
               AWS: !Sub
-                - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity {OriginId}'
+                - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OriginId}'
                 - { OriginId: !Ref WebsiteCloudfrontOriginId }
             Action:
               - 's3:GetObject'
             Resource: !Sub
-              - '{BucketArn}/*'
+              - '${BucketArn}/*'
               - { BucketArn: !GetAtt WebS3Bucket.Arn }
           - Effect: Allow
             Principal:
               AWS: !Sub
-                - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity {OriginId}'
+                - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OriginId}'
                 - { OriginId: !Ref WebsiteCloudfrontOriginId }
             Action:
               - 's3:GetObject'
             Resource: !Sub
-              - '{BucketArn}/*'
+              - '${BucketArn}/*'
               - { BucketArn: !GetAtt WebS3Bucket.Arn }
 
   WebsiteCloudfrontOriginId:
@@ -92,21 +92,17 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: 'logs:CreateLogGroup'
-                Resource: !Sub
-                  - 'arn:aws:logs:{Region}:{AccountId}:*'
-                  - { Region: AWS::Region, AccountId: AWS::AccountId }
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
               - Effect: Allow
                 Action:
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
-                Resource: !Sub
-                  - 'arn:aws:logs:{Region}:{AccountId}:*'
-                  - { Region: AWS::Region, AccountId: AWS::AccountId }
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
               - Effect: Allow
                 Action: 'logs:CreateLogGroup'
                 Resource: !Sub
-                  - 'arn:aws:logs:{Region}:{AccountId}:log-group:/aws/lambda/{LogGroupName}:*'
-                  - { Region: AWS::Region, AccountId: AWS::AccountId, LogGroupName: !Ref HostnameRedirectLambdaName }
+                  - 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LogGroupName}:*'
+                  - { LogGroupName: !Ref HostnameRedirectLambdaName }
       Tags:
         - Key: ProjectId
           Value: !Ref ProjectIdTag
@@ -192,17 +188,17 @@ Resources:
         Origins:
           - Id: !Ref WebS3Bucket
             DomainName: !Sub
-              - '{BucketName}.s3.{Region}.amazonaws.com'
-              - { BucketName: !Ref WebS3Bucket, Region: AWS::Region }
+              - '${BucketName}.s3.${AWS::Region}.amazonaws.com'
+              - { BucketName: !Ref WebS3Bucket }
             S3OriginConfig:
               OriginAccessIdentity: !Sub
-                - 'origin-access-identity/cloudfront/{OriginId}'
+                - 'origin-access-identity/cloudfront/${OriginId}'
                 - { OriginId: !Ref WebsiteCloudfrontOriginId }
         PriceClass: PriceClass_All
         ViewerCertificate:
           AcmCertificateArn: !Sub
-            - 'arn:aws:acm:{Region}:{AccountId}:certificate/{CertificateId}'
-            - { Region: AWS::Region, AccountId: AWS::AccountId, CertificateId: !Ref CertificateId }
+            - 'arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${CertificateId}'
+            - { CertificateId: !Ref CertificateId }
           MinimumProtocolVersion: TLSv1.2_2019
           SslSupportMethod: sni-only
       Tags:
@@ -257,10 +253,8 @@ Outputs:
   RedirectLambdaName:
     Value: !Ref WebsiteHostnameRedirectLambda
     Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-WebsiteHostnameRedirectLambda"
+      Name: !Sub "${AWS::StackName}-WebsiteHostnameRedirectLambda"
   RedirectLambdaArn:
     Value: !GetAtt WebsiteHostnameRedirectLambda.Arn
     Export:
-      Name:
-        Fn::Sub: "${AWS::StackName}-WebsiteHostnameRedirectLambdaArn"
+      Name: !Sub "${AWS::StackName}-WebsiteHostnameRedirectLambdaArn"
