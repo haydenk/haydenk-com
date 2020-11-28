@@ -11,6 +11,9 @@ Parameters:
     Type: String
   HostedZone:
     Type: String
+  HostnameRedirectLambdaName:
+    Type: String
+    Default: haydenk-com-hostname-redirect
   ManagedCachingOptimizedPolicy:
     Type: String
     Default: 658327ea-f89d-4fab-a63d-7e88639e58f6
@@ -103,7 +106,7 @@ Resources:
                 Action: 'logs:CreateLogGroup'
                 Resource: !Sub
                   - 'arn:aws:logs:{Region}:{AccountId}:log-group:/aws/lambda/{LogGroupName}:*'
-                  - { Region: AWS::Region, AccountId: AWS::AccountId, LogGroupName: !Ref WebsiteHostnameRedirectLambda }
+                  - { Region: AWS::Region, AccountId: AWS::AccountId, LogGroupName: !Ref HostnameRedirectLambdaName }
       Tags:
         - Key: ProjectId
           Value: !Ref ProjectIdTag
@@ -111,7 +114,7 @@ Resources:
   WebsiteHostnameRedirectLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: haydenk-com-hostname-redirect
+      FunctionName: !Ref HostnameRedirectLambdaName
       Description: |
         This is an embedded lambda@edge in CloudFront
         that redirects any request where the hostname
