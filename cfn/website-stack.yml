@@ -107,7 +107,6 @@ Resources:
           - !Ref PrimaryDomain
           - !Ref SecondaryDomain
         DefaultCacheBehavior:
-          TargetOriginId: !Ref WebS3Bucket
           AllowedMethods:
             - GET
             - HEAD
@@ -124,15 +123,6 @@ Resources:
         Enabled: true
         HttpVersion: http2
         IPV6Enabled: true
-        Origins:
-          - Id: !Ref WebS3Bucket
-            DomainName: !Sub
-              - '${BucketName}.s3.${AWS::Region}.amazonaws.com'
-              - { BucketName: !Ref WebS3Bucket }
-            S3OriginConfig:
-              OriginAccessIdentity: !Sub
-                - 'origin-access-identity/cloudfront/${OriginId}'
-                - { OriginId: !Ref WebsiteCloudfrontOriginId }
         PriceClass: PriceClass_All
         ViewerCertificate:
           AcmCertificateArn: !Sub
