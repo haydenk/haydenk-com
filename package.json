@@ -1,0 +1,9 @@
+{
+  "name": "haydenk-com",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@types/aws-lambda": "^8.10.71",
+    "typescript": "^4.1.3"
+  }
+}
