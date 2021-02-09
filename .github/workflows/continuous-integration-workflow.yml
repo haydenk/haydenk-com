@@ -1,22 +1,10 @@
-name: Build and Deploy haydenk.com
+name: Deploy haydenk.com
 
 on:
   push:
     branches: [ master ]
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Upload Cloudformation Template Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: cfn
-          path: ./cfn
-
   deploy:
     name: Deploy
     needs: build
@@ -26,8 +14,7 @@ jobs:
       SECONDARY_DOMAIN: haydenk.com
 
     steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@v2
+      - uses: actions/checkout@v2
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -42,7 +29,7 @@ jobs:
         with:
           name: haydenk-com-stack
           capabilities: "CAPABILITY_IAM,CAPABILITY_NAMED_IAM"
-          template: cfn/website-stack.yml
+          template: website-stack.yml
           no-fail-on-empty-changeset: "1"
           parameter-overrides: >-
             WebsiteS3Bucket=${{ secrets.WEBSITE_BUCKET_NAME }},
