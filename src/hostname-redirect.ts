@@ -1,11 +1,21 @@
-import {Handler, CloudFrontRequestEvent, Context, CloudFrontResponse} from "aws-lambda";
+import {Handler, CloudFrontRequestEvent, Context, CloudFrontResponse, CloudFrontRequest} from "aws-lambda";
 
-const handler: Handler = async (event: CloudFrontRequestEvent, context: Context): Promise<CloudFrontResponse> {
+// @ts-ignore
+const handler: Handler = async (event: CloudFrontRequestEvent, context: Context): Promise<CloudFrontResponse|CloudFrontRequest> => {
     const request = event.Records[0].cf.request;
     const headers_host = request.headers.host[0].value;
-    let redirect_url = 'https://en.wikipedia.org/wiki/HTTP_404';
-    if (headers_host === 'haydenk.com' || headers_host === 'www.haydenk.com') {
-        redirect_url = 'https://github.com/haydenk';
+    const primary_host_url = 'www.haydenk.com';
+
+    if (headers_host === primary_host_url) {
+        return request;
+    }
+
+    /*
+     * Generate HTTP redirect response with 302 status code and Location header.
+     */
+    let redirectUrl = `https://${primary_host_url}${request.uri}`;
+    if (request.querystring) {
+        redirectUrl += `?${request.querystring}`
     }
     const response: CloudFrontResponse = {
         status: '302',
@@ -13,10 +23,11 @@ const handler: Handler = async (event: CloudFrontRequestEvent, context: Context)
         headers: {
             location: [{
                 key: 'Location',
-                value: redirect_url
+                value: redirectUrl
             }]
         }
     };
+
     return response;
 }
 export { handler }

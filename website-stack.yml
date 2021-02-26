@@ -118,30 +118,35 @@ Resources:
       Role: !GetAtt WebsiteHostnameRedirectLambdaRole.Arn
       Code:
         ZipFile: |
-          'use strict';
-          exports.handler = async (event, context) => {
+          "use strict";
+          Object.defineProperty(exports, "__esModule", { value: true });
+          exports.handler = void 0;
+          const handler = async (event, context) => {
               const request = event.Records[0].cf.request;
               const headers_host = request.headers.host[0].value;
-              let redirectUrl = 'https://en.wikipedia.org/wiki/HTTP_404';
-
-              if (headers_host === 'haydenk.com' || headers_host === 'www.haydenk.com') {
-                  redirectUrl = 'https://www.github.com/haydenk';
+              const primary_host_url = 'www.haydenk.com';
+              if (headers_host === primary_host_url) {
+                  return request;
               }
-
+              let redirectUrl = `https://${primary_host_url}${request.uri}`;
+              if (request.querystring) {
+                  redirectUrl += `?${request.querystring}`;
+              }
               const response = {
                   status: '302',
                   statusDescription: 'Found',
                   headers: {
                       location: [{
-                          key: 'Location',
-                          value: redirectUrl,
-                      }],
-                  },
+                              key: 'Location',
+                              value: redirectUrl
+                          }]
+                  }
               };
               return response;
           };
+          exports.handler = handler;
       Handler: index.handler
-      Runtime: nodejs12.x
+      Runtime: nodejs14.x
       TracingConfig:
         Mode: Active
       Tags:
@@ -149,6 +154,11 @@ Resources:
           Value: !Ref ProjectIdTag
 
   WebsiteHostnameRedirectLambdaVersionE:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName: !Ref WebsiteHostnameRedirectLambda
+
+  WebsiteHostnameRedirectLambdaVersionA:
     Type: AWS::Lambda::Version
     Properties:
       FunctionName: !Ref WebsiteHostnameRedirectLambda
@@ -173,7 +183,7 @@ Resources:
           LambdaFunctionAssociations:
             - EventType: viewer-request
               IncludeBody: false
-              LambdaFunctionARN: !Ref WebsiteHostnameRedirectLambdaVersionE
+              LambdaFunctionARN: !Ref WebsiteHostnameRedirectLambdaVersionA
         DefaultRootObject: index.html
         Enabled: true
         HttpVersion: http2
